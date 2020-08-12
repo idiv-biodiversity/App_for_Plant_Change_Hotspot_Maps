@@ -128,7 +128,19 @@ ui<- fluidPage(
                   sliderInput(inputId = "Opacity",
                               label="Opacity of active layer",
                               value=0.8,
-                              min=0, max=1,step = 0.1), ## the layers should not alsways cover the basemap details; here you can change the transparency of the active layer
+                              min=0, max=1,step = 0.1),
+                  HTML("<font size=1> <p align='justify'> <em> We are grateful to the tremendous effort of the countless 
+                        people who contributed their plant occurrence records to the different sources that underlie this visualization!</em> </p><font>"),
+                  fluidRow(HTML("<font size=1> <p align='center'> <em>Project Links:</em>"),
+                           br(),
+                           column(4,tags$a(imageOutput("image1"),
+                                           href="https://www.idiv.de/en/smon",
+                                           target="_blank",
+                                           alt="Go to sMon Homepage")),
+                           column(8,tags$a(imageOutput("image2"),
+                                           href="https://www.idiv.de/",
+                                           target="_blank"))
+                  ),## the layers should not alsways cover the basemap details; here you can change the transparency of the active layer
               width=2),
       ### Now we begin with the main panel (i.e. right of the side panel)
       ### the main panel will hold the map(s).
@@ -146,21 +158,21 @@ ui<- fluidPage(
                        "The values in this visualization refer to the study of Eichenberg et al. (2020)",
                        tabsetPanel(type = "tabs",## sets up different tabs, one for each tabPanel argument below
                         tabPanel("Species Richness",
-                                 fluidRow(column(4,"1960-1987",leafletOutput(outputId="sopgrid_map1")),
-                                          column(4,"1988-1996",leafletOutput(outputId="sopgrid_map2")),
-                                          column(4,"1960-1987",leafletOutput(outputId="sopgrid_map3")))),
+                                 fluidRow(column(4,h5("1960-1987",align="center"),leafletOutput(outputId="sopgrid_map1")),
+                                          column(4,h5("1988-1996",align="center"),leafletOutput(outputId="sopgrid_map2")),
+                                          column(4,h5("1960-1987",align="center"),leafletOutput(outputId="sopgrid_map3")))),
                         tabPanel("Absolute Changes",
-                                 fluidRow(column(4,"1960-1987 vs. 1988-1996",leafletOutput(outputId="abschange_map1")),
-                                          column(4,"1988-1996 vs. 1997-2017",leafletOutput(outputId="abschange_map2")),
-                                          column(4,"1960-1987 vs. 1997-2017",leafletOutput(outputId="abschange_map3")))),
+                                 fluidRow(column(4,h5("1960-1987 vs. 1988-1996",align="center"),leafletOutput(outputId="abschange_map1")),
+                                          column(4,h5("1988-1996 vs. 1997-2017",align="center"),leafletOutput(outputId="abschange_map2")),
+                                          column(4,h5("1960-1987 vs. 1997-2017",align="center"),leafletOutput(outputId="abschange_map3")))),
                         tabPanel("Relative Change [%]",
-                                 fluidRow(column(4,"1960-1987 vs. 1988-1996",leafletOutput(outputId="relchange_map1")),
-                                          column(4,"1988-1996 vs. 1997-2017",leafletOutput(outputId="relchange_map2")),
-                                          column(4,"1960-1987 vs. 1997-2017",leafletOutput(outputId="relchange_map3")))),
+                                 fluidRow(column(4,h5("1960-1987 vs. 1988-1996",align="center"),leafletOutput(outputId="relchange_map1")),
+                                          column(4,h5("1988-1996 vs. 1997-2017",align="center"),leafletOutput(outputId="relchange_map2")),
+                                          column(4,h5("1960-1987 vs. 1997-2017",align="center"),leafletOutput(outputId="relchange_map3")))),
                         tabPanel("Hotspots of relative Change",
-                                 fluidRow(column(4,"1960-1987 vs. 1988-1996",leafletOutput(outputId="hotspot_rel_map1")),
-                                          column(4,"1988-1996 vs. 1997-2017",leafletOutput(outputId="hotspot_rel_map2")),
-                                          column(4,"1960-1987 vs. 1997-2017",leafletOutput(outputId="hotspot_rel_map3"))))
+                                 fluidRow(column(4,h5("1960-1987 vs. 1988-1996",align="center"),leafletOutput(outputId="hotspot_rel_map1")),
+                                          column(4,h5("1988-1996 vs. 1997-2017",align="center"),leafletOutput(outputId="hotspot_rel_map2")),
+                                          column(4,h5("1960-1987 vs. 1997-2017",align="center"),leafletOutput(outputId="hotspot_rel_map3"))))
                         ),width=10
                     )
           )
@@ -185,6 +197,20 @@ output$relchange_map3<- renderLeaflet({germanmap})
 output$hotspot_rel_map1<- renderLeaflet({germanmap}) 
 output$hotspot_rel_map2<- renderLeaflet({germanmap}) 
 output$hotspot_rel_map3<- renderLeaflet({germanmap}) 
+
+output$image1<- renderImage({
+  list(src = "./sMon_image.png",
+       contentType = "image/png",
+       width = "41px",
+       height = "40px"
+  )}, deleteFile = FALSE)
+
+output$image2<- renderImage({
+  list(src = "./iDiv_image.png",
+       contentType = "image/png",
+       width = "60px",
+       height = "24px"
+  )}, deleteFile = FALSE)
 
 ## Now I will sequentially add information to the basic maps. On each tab, specific information will be displayed
 ## and therefor, different arguments will be necessary per tab.
