@@ -99,7 +99,31 @@ germanmap <- leaflet() %>%
   syncWith(groupname = "germanmaps")
 
 ## Color functions
+colfunc_native_num<- colorRampPalette(c("#1f78b4ff", 
+                                        "#1f78b4ff", 
+                                        "#1f78b4ff"), 
+                                      interpolate="linear")
 
+colfunc_neo_num<- colorRampPalette(c("#fef208ff", 
+                                     "#fef208ff", 
+                                     "#fef208ff"), 
+                                   interpolate="linear")
+
+colfunc_archaeo_num<- colorRampPalette(c("#a6cee3ff", 
+                                         "#a6cee3ff", 
+                                         "#a6cee3ff"), 
+                                       interpolate="linear")
+
+colfunc_overlapp<- colorRampPalette(c("#e31a1cff", 
+                                      "#e31a1cff", 
+                                      "#e31a1cff"), 
+                                    interpolate="linear")
+
+colfunc_palette_overlap<- colorRampPalette(c("#1f78b4ff", 
+                                             "#fef208ff", 
+                                             "#a6cee3ff", 
+                                             "#e31a1cff"), 
+                                           interpolate="linear")
 
 
 ################## Set up the User interface #########
@@ -128,7 +152,7 @@ ui <- fluidPage(
                                               "Neophytes" = "Neophytes",
                                               "All Species" = "All Species"),
                                      selected = "All Species"
-                                      ), # here, the user will be able to select the floristic status group
+                                      ),                  # here, the user will be able to select the floristic status group
                   br(),
                   br(),
                   sliderInput(inputId = "Opacity",
@@ -233,10 +257,26 @@ ui <- fluidPage(
                                                  leafletOutput(outputId = "hotspot_rel_map3")
                                                  )
                                           )
+                                 ),
+                        tabPanel("Overlaps of hotspots across the full study period",
+                                 fluidRow(column(4,
+                                                 h5("Natives vs. Archaeophytes", align = "center"),
+                                                 leafletOutput(outputId = "nat_vs_arch")
+                                 ),
+                                 column(4,
+                                        h5("Natives vs. Neophytes", align = "center"),
+                                        leafletOutput(outputId = "nat_vs_neo")
+                                 ),
+                                 column(4,
+                                        h5("Archaeophytes vs. Neophytes",align = "center"),
+                                        leafletOutput(outputId = "arch_vs_neo")
                                  )
-                        ), width = 10
-                    )
+                             )
+                         )
+                      ), width = 10)
+                    
           )
+
 
 server<- function(input, output) {
   ## add the basemaps and the floristic status
@@ -258,6 +298,11 @@ output$relchange_map3 <- renderLeaflet({germanmap})
 output$hotspot_rel_map1 <- renderLeaflet({germanmap}) 
 output$hotspot_rel_map2 <- renderLeaflet({germanmap}) 
 output$hotspot_rel_map3 <- renderLeaflet({germanmap}) 
+
+output$nat_vs_arch <- renderLeaflet({germanmap}) 
+output$nat_vs_neo <- renderLeaflet({germanmap}) 
+output$arch_vs_neo <- renderLeaflet({germanmap}) 
+
 
 output$image1 <- renderImage({
                             list(src = "./sMon_image.png",
@@ -282,7 +327,9 @@ observeEvent(c(input$Florstat,
                input$Basemap,
                input$Opacity,
                input$url,
-               input$mode_of_maps),{
+               input$mode_of_maps,
+               input$Overlap),{
+    
     opac <- input$Opacity
     url <- input$url
     Florstat <- input$Florstat
@@ -334,8 +381,7 @@ observeEvent(c(input$Florstat,
     mapData4 <- readRDS(paste0("./datasets/ras_abs_change_", Florstat, "_1.rds"))
     mapData5 <- readRDS(paste0("./datasets/ras_abs_change_", Florstat, "_2.rds"))
     mapData6 <- readRDS(paste0("./datasets/ras_abs_change_", Florstat, "_3.rds"))
-    
-    
+  
     ## Which have the biggest values
     val_mdat4 <- values(mapData4)[-which(is.na(values(mapData4)))]
     val_mdat5 <- values(mapData5)[-which(is.na(values(mapData5)))]
@@ -460,6 +506,16 @@ observeEvent(c(input$Florstat,
                                Florstat,
                                "_3.rds")
                         )
+    
+    
+    ras_hotsp_nat<- readRDS("./datasets/ras_hotsp_nat.rds")
+    ras_hotsp_archaeo<- readRDS("./datasets/ras_hotsp_archaeo.rds")
+    ras_hotsp_neo<- readRDS("./datasets/ras_hotsp_neo.rds")
+    
+    ras_nat_vs_arch<- readRDS("./datasets/ras_nat_vs_arch.rds")
+    ras_nat_vs_neo<- readRDS("./datasets/ras_nat_vs_neo.rds")
+    ras_arch_vs_neo<- readRDS("./datasets/ras_arch_vs_neo.rds")
+    
     
     
     ## Fill the maps with the data
@@ -654,7 +710,75 @@ observeEvent(c(input$Florstat,
       addRasterImage(mapData12, 
                      colors = colfunc_rel_change(800),
                      opacity = opac)
-  })  #the $ argument must match the plotOutput in "ui()"
+  
+    ## Overlap of hotspot regions
+    leafletProxy("nat_vs_arch") %>% 
+      clearImages() %>%
+      clearControls() %>%
+      addProviderTiles(provider = input$Basemap) %>%
+      addWMSTiles(baseUrl = url,
+                  layers = "Naturraeume", 
+                  options = WMSTileOptions(transparent = TRUE,format = "image/png"), 
+                  attribution = "Bundesamt für Naturschutz (BfN)") %>%
+      addRasterImage(ras_hotsp_nat, 
+                     colors = colfunc_native_num(1),
+                     opacity = 0.7) %>%
+      addRasterImage(ras_hotsp_archaeo, 
+                     colors = colfunc_archaeo_num(1),
+                     opacity = 0.7) %>%
+      addRasterImage(ras_nat_vs_arch, 
+                     colors = colfunc_overlapp(1),
+                     opacity = opac) %>%
+      addLegend("topright", 
+                opacity=0.9, 
+                colors = c(colfunc_palette_overlap(4)[1], 
+                           colfunc_palette_overlap(4)[2], 
+                           colfunc_palette_overlap(4)[3], 
+                           colfunc_palette_overlap(4)[4]), 
+                labels = c("Natives", "Neophytes", "Archaeophytes", "Overlap"),
+                title ="Floristic group")
+
+    
+    ## Overlap of hotspot regions
+    leafletProxy("nat_vs_neo") %>% 
+      clearImages() %>%
+      clearControls() %>%
+      addProviderTiles(provider = input$Basemap) %>%
+      addWMSTiles(baseUrl = url,
+                  layers = "Naturraeume", 
+                  options = WMSTileOptions(transparent = TRUE,format = "image/png"), 
+                  attribution = "Bundesamt für Naturschutz (BfN)") %>%
+      addRasterImage(ras_hotsp_nat, 
+                     colors = colfunc_native_num(1),
+                     opacity = 0.7) %>%
+      addRasterImage(ras_hotsp_neo, 
+                     colors = colfunc_neo_num(1),
+                     opacity = 0.7) %>%
+      addRasterImage(ras_nat_vs_neo, 
+                     colors = colfunc_overlapp(1),
+                     opacity = opac)
+
+    
+    ## Overlap of hotspot regions
+    leafletProxy("arch_vs_neo") %>% 
+      clearImages() %>%
+      clearControls() %>%
+      addProviderTiles(provider = input$Basemap) %>%
+      addWMSTiles(baseUrl = url,
+                  layers = "Naturraeume", 
+                  options = WMSTileOptions(transparent = TRUE,format = "image/png"), 
+                  attribution = "Bundesamt für Naturschutz (BfN)") %>%
+      addRasterImage(ras_hotsp_archaeo, 
+                     colors = colfunc_archaeo_num(1),
+                     opacity = 0.7) %>%
+      addRasterImage(ras_hotsp_neo, 
+                     colors = colfunc_neo_num(1),
+                     opacity = 0.7) %>%
+      addRasterImage(ras_nat_vs_arch, 
+                     colors = colfunc_overlapp(1),
+                     opacity = opac)
+    
+    })  #the $ argument must match the plotOutput in "ui()"
 }
 
 shinyApp(ui = ui, server = server)
