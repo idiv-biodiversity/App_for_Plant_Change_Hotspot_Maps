@@ -208,7 +208,7 @@ ui <- fluidPage(
                                                  leafletOutput(outputId = "sopgrid_map2")
                                                  ),
                                           column(4,
-                                                 h5("1960-1987", align = "center"),
+                                                 h5("1997-2017", align = "center"),
                                                  leafletOutput(outputId = "sopgrid_map3")
                                                  )
                                           )
